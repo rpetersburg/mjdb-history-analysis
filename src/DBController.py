@@ -9,29 +9,39 @@ class DBController():
         self.couchURL = 'http://feresa.physics.unc.edu:5984/'
         self.couch = couchdb.Server( self.couchURL )
         self.db = self.couch['history_mjdscm']
+        self.dataArray = []
+        self.timeArray = []
 
     
     def appendParticleData( self, particleRec, particleSize, dataArray, timeArray ):
-        if particleSize == ('0.3' or '0.5' or '0.7' or '1.0' or '2.0' or '5.0'):
-            dataArray.append(self.db[particleRec]['adcs'][0]['MS ' + particleSize + ' um count'])
-            timeArray.append(self.getDateTimeObject(self.db[rec]['timestamp']))
-        else:
+        try:
+            for item in self.db[ particleRec ]['adcs']:
+                if ('DR ' + particleSize + ' um count') in item:
+                    dataArray.append( item['DR ' + particleSize + ' um count'] )
+                    timeArray.append( self.db[ particleRec ][ 'time' ] )
+        except KeyError, TypeError:
             print 'Invalid Particle Size'
-            
-    def getDateTimeObject( self, string ):
-        return datetime.strptime(string, '%Y/%m/%d %H:%M:%S')
 
-    def iterator():
-        for rec in
+    def iterator( self, particleSize ):
+        n = 0
+        print 'Starting'
+        for rec in self.db:
+            print 'Iterating'
+            if n > 10:
+                break
+            elif 'adcs' in rec:
+                print "Hooray"
+                appendParticleData( rec, particleSize, self.dataArray, self.timeArray )
+            else:
+                print 'Oh no!'
+            n += 1
+                
 
 
 
 dbController = DBController()
-rec = '00f8e4c5c894ec099abc8a1e2f000a0b'
-dataArray = []
-timeArray = []
-dbController.appendParticleData( rec, dataArray, timeArray )
-print dataArray
-dates = dates.date2num(timeArray)
-print timeArray
-print dates
+dbController.iterator('0.5')
+print dbController.dataArray
+##dates = dates.date2num(timeArray)
+print dbController.timeArray
+##print dates
