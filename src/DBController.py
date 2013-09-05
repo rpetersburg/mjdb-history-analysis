@@ -20,18 +20,19 @@ class DBController():
             return {'count': None, 'time': None}
 
 
-    def iterator( self, particleSize ):
+    def iterator( self, particleSize, num ):
         n = 0
         for rec in self.couchdb_pager(self.db):
-            if n>10:
+            if n > num:
                 break
             if 'adcs' in self.db[ rec ]:
                 for item in self.db[ rec ]['adcs']:
                     if ('DR ' + particleSize + ' um count') in item:
                         self.dataArray.append( self.getParticleData( rec, self.db[rec]['adcs'].index(item), particleSize ) )
-                        n+=1
+                        n += 1
 
-            
+
+    # This is not my own function. I am using a public domain function by Marcus Brinkmann that speeds up couchDB iteration time #
     def couchdb_pager(self, db, view_name='_all_docs', startkey=None, startkey_docid=None, endkey=None, endkey_docid=None, bulk=5000):
         # Request one extra row to resume the listing there later.
         options = {'limit': bulk + 1}
@@ -65,5 +66,5 @@ class DBController():
 
 
 dbController = DBController()
-dbController.iterator('0.5')
+dbController.iterator('0.5',50)
 print dbController.dataArray
