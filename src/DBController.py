@@ -12,7 +12,7 @@ class DBController():
         self.dataArray = []
 
     
-    def getParticleData( self, particleRec, index, particleSize ):
+    def getParticleCount( self, particleRec, index, particleSize ):
         try:
             return {'count': self.db[particleRec]['adcs'][index]['DR ' + particleSize + ' um count'] , 'time': self.db[particleRec]['time'] }
         except KeyError, TypeError:
@@ -20,16 +20,27 @@ class DBController():
             return {'count': None, 'time': None}
 
 
-    def iterator( self, particleSize, num ):
+    def getParticleData( self, particleSize, num=float('inf') ):
+        
         n = 0
         for rec in self.couchdb_pager(self.db):
-            if n > num:
+            if n >= num:
                 break
             if 'adcs' in self.db[ rec ]:
                 for item in self.db[ rec ]['adcs']:
                     if ('DR ' + particleSize + ' um count') in item:
-                        self.dataArray.append( self.getParticleData( rec, self.db[rec]['adcs'].index(item), particleSize ) )
+                        self.dataArray.append( self.getParticleCount( rec, self.db[rec]['adcs'].index(item), particleSize ) )
                         n += 1
+                        print n
+        return self.dataArray
+
+    def saveParticleData( self, dataArray, particleSize ):
+        with open('particleData' + particleSize + '.json', 'wb') as fp:
+            json.dump(dataArray, fp)
+
+    def loadParticleData( self, particleSize ):
+        with open('particleData' + particleSize + '.json', 'rb') as fp:
+            return json.load(fp)
 
 
     # This is not my own function. I am using a public domain function by Marcus Brinkmann that speeds up couchDB iteration time #
@@ -61,10 +72,3 @@ class DBController():
 
             for row in rows:
                 yield row.id
-                    
-
-
-
-dbController = DBController()
-dbController.iterator('0.5',50)
-print dbController.dataArray
