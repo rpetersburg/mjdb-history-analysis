@@ -19,7 +19,7 @@ class DataAnalysis():
                     self.dataDictionary['Day Shift'].append( item )
                 elif item['time'].time() >= nightStartTime and item['time'].time() < emptyStartTime:
                     self.dataDictionary['Night Shift'].append( item )
-                elif item['time'].time() >= emptyStartTime and item['time'].time() < dayStartTime:
+                elif item['time'].time() >= emptyStartTime or item['time'].time() < dayStartTime:
                     self.dataDictionary['Empty Lab'].append( item )
         return self.dataDictionary
 
@@ -39,8 +39,9 @@ class DataAnalysis():
         for item in dataDictionary['Empty Lab']:
             emptyLabDates.append(item['time'])
             emptyLabCounts.append(item['count'])
-        pyplot.plot_date(date2num(nightShiftDates),nightShiftCounts, 'b-')
-        pyplot.plot_date(date2num(dayShiftDates),nightShiftCounts, 'r-')
+        pyplot.plot_date(date2num(dayShiftDates),dayShiftCounts, 'b-')
+        pyplot.plot_date(date2num(nightShiftDates),nightShiftCounts, 'r-')
+        pyplot.plot_date(date2num(emptyLabDates),emptyLabCounts, 'g-')
         pyplot.xlabel( 'Date' )
         pyplot.ylabel( 'Count' )
         pyplot.show()
