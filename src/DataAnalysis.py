@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from matplotlib import pyplot
 from matplotlib.dates import date2num
 
@@ -9,17 +9,17 @@ class DataAnalysis():
         pass
 
     def organizeDataArray( self, dataArray, startDate=datetime(2000,1,1), endDate=datetime.utcnow() ): 
-        dayStartTime = time(2,0,0)
-        nightStartTime = time(10,0,0)
-        emptyStartTime = time(18,0,0)
+        dayStartTime = time(8,0,0)
+        nightStartTime = time(16,30,0)
+        emptyStartTime = time(0,0,0)
         for item in dataArray:
-            item['time'] = datetime.fromtimestamp( item['time'] )
+            item['time'] = datetime.fromtimestamp( item['time'] ) - timedelta(hours=2)
             if item['time'] >= startDate and item['time'] <= endDate:
                 if item['time'].time() >= dayStartTime and item['time'].time() < nightStartTime:
                     self.dataDictionary['Day Shift'].append( item )
-                elif item['time'].time() >= nightStartTime and item['time'].time() < emptyStartTime:
+                elif item['time'].time() >= nightStartTime or item['time'].time() < emptyStartTime:
                     self.dataDictionary['Night Shift'].append( item )
-                elif item['time'].time() >= emptyStartTime or item['time'].time() < dayStartTime:
+                elif item['time'].time() >= emptyStartTime and item['time'].time() < dayStartTime:
                     self.dataDictionary['Empty Lab'].append( item )
         return self.dataDictionary
 
@@ -39,9 +39,9 @@ class DataAnalysis():
         for item in dataDictionary['Empty Lab']:
             emptyLabDates.append(item['time'])
             emptyLabCounts.append(item['count'])
-        pyplot.plot_date(date2num(dayShiftDates),dayShiftCounts, 'b-')
-        pyplot.plot_date(date2num(nightShiftDates),nightShiftCounts, 'r-')
-        pyplot.plot_date(date2num(emptyLabDates),emptyLabCounts, 'g-')
+        pyplot.plot_date(date2num(dayShiftDates),dayShiftCounts, 'r-')
+        pyplot.plot_date(date2num(nightShiftDates),nightShiftCounts, 'g-')
+        pyplot.plot_date(date2num(emptyLabDates),emptyLabCounts, 'b-')
         pyplot.xlabel( 'Date' )
         pyplot.ylabel( 'Count' )
         pyplot.show()

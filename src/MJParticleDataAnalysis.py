@@ -1,6 +1,7 @@
 import DBController
 import DataAnalysis
 import sys
+from datetime import datetime
 
 class MJParticleDataAnalysis:
     def __init__(self):
@@ -8,8 +9,7 @@ class MJParticleDataAnalysis:
         self.dataAnalysis = DataAnalysis.DataAnalysis()
 
     def run(self, particleSize='0.5'):
-        allData = self.dbController.getAllData()
-        dataArray = self.dbController.getParticleData( particleSize, allData )
+        dataArray = self.dbController.getParticleData( particleSize )
 
         dataDictionary = self.dataAnalysis.organizeDataArray( dataArray )
         averages = self.dataAnalysis.averageAllTimes(dataDictionary)
@@ -19,7 +19,8 @@ class MJParticleDataAnalysis:
         self.dataAnalysis.graphDataDictionary( dataDictionary )
 
     def saveParticleData( self ):
-        allData = self.dbController.getAllDataFromDatabase()
+        for particleSize in ['0.3','0.5','0.7','1.0','2.0','5.0']:
+            self.dbController.saveParticleDataFromDatabase(particleSize)
             
 
 if __name__ == '__main__':
