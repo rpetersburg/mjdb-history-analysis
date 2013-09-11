@@ -22,7 +22,6 @@ class DBController():
             self.saveParticleData( dataArray, particleSize )
         return dataArray
 
-
     def getParticleDataFromAllData( self, particleSize, allData, startDate=datetime(2013,5,1), endDate = datetime.utcnow() ):
         dataArray = []
         n = 1
@@ -34,36 +33,7 @@ class DBController():
                     print n ,
                     n += 1
         return dataArray
-
-    def getAllData( self ):
-        try:
-            print 'Attempting to Load All Data'
-            allData = self.loadParticleData('')
-            print 'Load Successful'
-        except IOError:
-            print 'Saved Data does not exist. Gathering and Saving Records'
-            allData = self.getAllDataFromDatabase()
-        return allData
-
-    def getAllDataFromDatabase( self, startPoint, endPoint ):
-        allData = self.loadParticleData( '' )
-        n = 1
-        for rec in self.couchdb_pager(self.db):
-            if n > endPoint:
-                break
-            if n > startPoint:
-                if self.db[rec]['title'][6:9] == 'SCM':
-                    allData.append( self.db[rec] )
-                    self.saveAllData( allData )
-                    print n ,
-            n += 1
-        return allData
-
-    def saveAllData( self, allData ):
-        with open('particleData.json', 'wb') as fp:
-            json.dump(allData, fp)
-        
-    
+            
     def getParticleCount( self, particleRec, particleSize ):
         if str(particleSize) == '0.3':
             index = 8
@@ -82,17 +52,63 @@ class DBController():
             return {'count': None, 'time': None}
         return {'count': particleRec['adcs'][index]['DR ' + str(particleSize) + ' um count'] , 'time': particleRec['time'] }
 
-
     def saveParticleData( self, dataArray, particleSize ):
-        with open('particleData' + str(particleSize) + '.json', 'wb') as fp:
+        with open('particleData' + str(particleSize) + '.json', 'w') as fp:
             json.dump(dataArray, fp)
 
     def loadParticleData( self, particleSize ):
-        with open('particleData' + str(particleSize) + '.json', 'rb') as fp:
+        with open('particleData' + str(particleSize) + '.json', 'r') as fp:
             return json.load(fp)
 
 
-    # This is not my own function. I am using a public domain function by Marcus Brinkmann that speeds up couchDB iteration time #
+    def getAllData( self ):
+        try:
+            print 'Attempting to Load All Data'
+            allData = self.loadParticleData('')
+            print 'Load Successful'
+        except IOError:
+            print 'Saved Data does not exist. Gathering and Saving Records'
+            allData = self.getAllDataFromDatabase()
+        return allData
+
+    def getAllDataFromDatabase( self, startCount=0, endCount=float('inf') ):
+        print 'Getting Data from Database'
+        database = open('database.json', 'r')
+        n = 1
+        print 'Organizing data'
+        for rec in database:
+            if n > endCount:
+                break
+            if n > startCount:
+                if database[rec]['title'][6:9] == 'SCM':
+                    allData.append( { 'adcs': database[rec]['adcs'], 'time': database[rec]['time'] } )
+                    print n ,
+            n += 1
+        self.saveAllData(allData)
+        return allData
+
+    def saveAllData( self, allData ):
+        with open('particleData.json', 'w') as fp:
+            json.dump(allData, fp)
+
+    def copyDatabase( self ):
+        #Use following in command prompt. Not sure how to implement in Python
+        #curl -X GET http://feresa.physics.unc.edu:5984/history_mjdscm/_all_docs?include_docs=true > database.txt
+        pass
+
+    def loadDatabase( self ):
+        pass
+
+    def parseDatabase( self ):
+        with open('database.json', 'r') as fp:
+            database = json.load(fp)
+            chunkSize = 1000
+            for i in xrange(0, len(database), chunkSize):
+                with open('database_' + str(i//chunkSize) + '.json', 'w') as outfile:
+                    json.dump(database[i:i+chunkSize], outfile)
+
+
+    # This is not my own function. I am using public domain code by Marcus Brinkmann that speeds up couchDB iteration time
     def couchdb_pager(self, db, view_name='_all_docs', startkey=None, startkey_docid=None, endkey=None, endkey_docid=None, bulk=5000):
         # Request one extra row to resume the listing there later.
         options = {'limit': bulk + 1}

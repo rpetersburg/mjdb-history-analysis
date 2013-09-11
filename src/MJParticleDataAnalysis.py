@@ -19,7 +19,8 @@ class MJParticleDataAnalysis:
         self.dataAnalysis.graphDataDictionary( dataDictionary )
 
     def saveAllData( self, startPoint, endPoint ):
-        allData = self.dbController.getAllDataFromDatabase(startPoint,endPoint)
+        self.dbController.parseDatabase()
+##        allData = self.dbController.getAllDataFromDatabase(startPoint,endPoint)
 
 if __name__ == '__main__':
     app = MJParticleDataAnalysis()
