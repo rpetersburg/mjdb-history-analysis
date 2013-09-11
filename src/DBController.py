@@ -22,16 +22,12 @@ class DBController():
             self.saveParticleData( dataArray, particleSize )
         return dataArray
 
-    def getParticleDataFromAllData( self, particleSize, allData, startDate=datetime(2013,5,1), endDate = datetime.utcnow() ):
+    def getParticleDataFromAllData( self, particleSize, allData ):
         dataArray = []
-        n = 1
+        print 'Getting ' + particleSize + ' from all data'
         for rec in allData:
-            if rec['title'] == 'Davis SCM Environmental Monitoring Processes':
-                recTime = datetime.fromtimestamp(rec['time'])
-                if recTime > startDate and recTime < endDate:
-                    dataArray.append( self.getParticleCount( rec, particleSize ) )
-                    print n ,
-                    n += 1
+            dataArray.append( self.getParticleCount( rec, particleSize ) )
+        self.saveParticleData(dataArray, particleSize)
         return dataArray
             
     def getParticleCount( self, particleRec, particleSize ):
@@ -69,23 +65,29 @@ class DBController():
         except IOError:
             print 'Saved Data does not exist. Gathering and Saving Records'
             allData = self.getAllDataFromDatabase()
+            self.saveAllData(allData)
         return allData
 
-    def getAllDataFromDatabase( self, startCount=0, endCount=float('inf') ):
+    def getAllDataFromDatabase( self ):
         print 'Getting Data from Database'
-        database = open('database.json', 'r')
-        n = 1
-        print 'Organizing data'
-        for rec in database:
-            if n > endCount:
-                break
-            if n > startCount:
-                if database[rec]['title'][6:9] == 'SCM':
-                    allData.append( { 'adcs': database[rec]['adcs'], 'time': database[rec]['time'] } )
+        with open('database.json', 'r') as database:
+            allData = []
+            n = 1
+            print 'Organizing data'
+            for rec in database:
+                if n % 1000 == 0:
                     print n ,
-            n += 1
-        self.saveAllData(allData)
-        return allData
+                try:
+                    recDict = json.loads(rec[0:-2])
+                    if recDict['id'][0] == '_':
+                        continue
+                    if recDict['doc']['title'][6:9] == 'SCM':
+                        allData.append( { 'adcs': recDict['doc']['adcs'], 'time': recDict['doc']['time'] } )
+                except (KeyError,ValueError) as e:
+                    print n, e
+                    print rec
+                n += 1
+        self.saveAllData( allData )
 
     def saveAllData( self, allData ):
         with open('particleData.json', 'w') as fp:
@@ -95,18 +97,6 @@ class DBController():
         #Use following in command prompt. Not sure how to implement in Python
         #curl -X GET http://feresa.physics.unc.edu:5984/history_mjdscm/_all_docs?include_docs=true > database.txt
         pass
-
-    def loadDatabase( self ):
-        pass
-
-    def parseDatabase( self ):
-        with open('database.json', 'r') as fp:
-            database = json.load(fp)
-            chunkSize = 1000
-            for i in xrange(0, len(database), chunkSize):
-                with open('database_' + str(i//chunkSize) + '.json', 'w') as outfile:
-                    json.dump(database[i:i+chunkSize], outfile)
-
 
     # This is not my own function. I am using public domain code by Marcus Brinkmann that speeds up couchDB iteration time
     def couchdb_pager(self, db, view_name='_all_docs', startkey=None, startkey_docid=None, endkey=None, endkey_docid=None, bulk=5000):
