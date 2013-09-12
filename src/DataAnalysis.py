@@ -5,80 +5,57 @@ from matplotlib.dates import date2num
 class DataAnalysis():
 
     def __init__(self):
-        self.dataDictionary = { 'Day Shift': [], 'Night Shift': [], 'Empty Lab': [] }
         pass
 
-    def organizeDataArray( self, dataArray, startDate=datetime(2000,1,1), endDate=datetime.utcnow() ): 
-        dayStartTime = time(8,0,0)
+    def organizeDataArray( self, dataArray, startDate=datetime(2000,1,1), endDate=datetime.utcnow() ):
+        dataDictionary = { 'Day Shift': {'Time': [], 'Count': []}, 'Night Shift': {'Time': [], 'Count': []}, 'Empty Lab': {'Time': [], 'Count': []} }
+        dayStartTime = time(7,30,0)
         nightStartTime = time(16,30,0)
         emptyStartTime = time(0,0,0)
         for item in dataArray:
             item['time'] = datetime.fromtimestamp( item['time'] ) - timedelta(hours=2)
             if item['time'] >= startDate and item['time'] <= endDate:
                 if item['time'].time() >= dayStartTime and item['time'].time() < nightStartTime:
-                    self.dataDictionary['Day Shift'].append( item )
+                    dataDictionary['Day Shift']['Time'].append( item['time'] )
+                    dataDictionary['Day Shift']['Count'].append( item['count'] )
                 elif item['time'].time() >= nightStartTime or item['time'].time() < emptyStartTime:
-                    self.dataDictionary['Night Shift'].append( item )
+                    dataDictionary['Night Shift']['Time'].append( item['time'] )
+                    dataDictionary['Night Shift']['Count'].append( item['count'] )
                 elif item['time'].time() >= emptyStartTime and item['time'].time() < dayStartTime:
-                    self.dataDictionary['Empty Lab'].append( item )
-        return self.dataDictionary
+                    dataDictionary['Empty Lab']['Time'].append( item['time'] )
+                    dataDictionary['Empty Lab']['Count'].append( item['count'] )
+        for shift in ['Day Shift','Night Shift','Empty Lab']:
+            dataDictionary[shift]['Time'], dataDictionary[shift]['Count'] = (list(t) for t in zip(*sorted(zip(dataDictionary[shift]['Time'], dataDictionary[shift]['Count']))))
+        return dataDictionary
 
-    def graphDataDictionary( self, dataDictionary ):
-        dayShiftDates = []
-        dayShiftCounts = []
-        nightShiftDates = []
-        nightShiftCounts = []
-        emptyLabDates = []
-        emptyLabCounts = []
-        for item in dataDictionary['Day Shift']:
-            dayShiftDates.append(item['time'])
-            dayShiftCounts.append(item['count'])
-        for item in dataDictionary['Night Shift']:
-            nightShiftDates.append(item['time'])
-            nightShiftCounts.append(item['count'])
-        for item in dataDictionary['Empty Lab']:
-            emptyLabDates.append(item['time'])
-            emptyLabCounts.append(item['count'])
+    def graphDataDictionary( self, dataDictionary, particleSize ):
+        dayShiftDates = dataDictionary['Day Shift']['Time']
+        dayShiftCounts = dataDictionary['Day Shift']['Count']
+        nightShiftDates = dataDictionary['Night Shift']['Time']
+        nightShiftCounts = dataDictionary['Night Shift']['Count']
+        emptyLabDates = dataDictionary['Empty Lab']['Time']
+        emptyLabCounts = dataDictionary['Empty Lab']['Count']
+        
         pyplot.plot_date(date2num(dayShiftDates),dayShiftCounts, 'r-')
         pyplot.plot_date(date2num(nightShiftDates),nightShiftCounts, 'g-')
         pyplot.plot_date(date2num(emptyLabDates),emptyLabCounts, 'b-')
-        pyplot.xlabel( 'Date' )
+        pyplot.xlabel( 'Date (MT)' )
         pyplot.ylabel( 'Count' )
+        pyplot.title( particleSize + ' um Counts' )
         pyplot.show()
-        
-    
-    def averageDayShift( self, dataDictionary ):
-        dayShiftCounts = []
-        dataArray = dataDictionary['Day Shift']
-        for item in dataArray:
-            dayShiftCounts.append( item['count'] )
-        if len(dayShiftCounts) == 0:
+
+    def getBaselines( self, dataDictionary ):
+        dayShiftCounts = data
+
+    def getAverageCount( self, dataDictionary, shift ):
+        counts = dataDictionary[shift]['Count']
+        if len(counts) == 0:
             return 0
-        return sum(dayShiftCounts)/float(len(dayShiftCounts))                   
-
-
-    def averageNightShift( self, dataDictionary ):
-        nightShiftCounts = []
-        dataArray = dataDictionary['Night Shift']
-        for item in dataArray:
-            nightShiftCounts.append( item['count'] )
-        if len(nightShiftCounts) == 0:
-            return 0
-        return sum(nightShiftCounts)/float(len(nightShiftCounts))
-
-
-    def averageEmptyLab( self, dataDictionary ):
-        emptyLabCounts = []
-        dataArray = dataDictionary['Empty Lab']
-        for item in dataArray:
-            emptyLabCounts.append( item['count'] )
-        if len(emptyLabCounts) == 0:
-            return 0
-        return sum(emptyLabCounts)/float(len(emptyLabCounts))
+        return sum(counts)/float(len(counts))
     
         
     def averageAllTimes( self, dataDictionary ):
-        return { 'Day Shift': self.averageDayShift(dataDictionary),
-                 'Night Shift': self.averageNightShift(dataDictionary),
-                 'Empty Lab': self.averageEmptyLab(dataDictionary) }
+        return { 'Day Shift': self.getAverageCount(dataDictionary,'Day Shift'),
+                 'Night Shift': self.getAverageCount(dataDictionary,'Night Shift'),
+                 'Empty Lab': self.getAverageCount(dataDictionary,'Empty Lab') }
     
