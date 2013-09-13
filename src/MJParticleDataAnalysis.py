@@ -11,11 +11,13 @@ class MJParticleDataAnalysis:
     def run(self, particleSize='0.5'):
         dataArray = self.dbController.getParticleData( particleSize )
 
-        dataDictionary = self.dataAnalysis.organizeDataArray( dataArray, datetime(2013,7,8), datetime(2013,7,12) )
-        averages = self.dataAnalysis.averageAllTimes(dataDictionary)
-        print 'Average Day Shift Count: ' + str(averages['Day Shift'])
-        print 'Average Night Shift Count: ' + str(averages['Night Shift'])
-        print 'Average Empty Lab Count: ' + str(averages['Empty Lab'])
+        startDate = datetime(2013,6,1)
+        endDate = datetime(2013,9,8)
+        allData = self.dataAnalysis.getAnalysisByDate(dataArray,startDate,endDate)
+
+        self.dataAnalysis.plotAllData( allData, particleSize )
+        
+        dataDictionary = self.dataAnalysis.organizeDataArray( dataArray, startDate, endDate )
         self.dataAnalysis.graphDataDictionary( dataDictionary, particleSize )
 
     def saveParticleData( self ):
