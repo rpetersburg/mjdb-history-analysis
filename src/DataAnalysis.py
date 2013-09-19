@@ -7,21 +7,24 @@ class DataAnalysis():
     def __init__(self):
         pass
 
-    def organizeDataArray( self, dataArray, startDate=datetime(2012,9,1), endDate=datetime.utcnow() ):
+    def organizeDataArray( self, dataArray, startDate=datetime(2012,9,18), endDate=datetime.utcnow() ):
         dataDictionary = { 'Day Shift': {'Time': [], 'Count': []}, 'Night Shift': {'Time': [], 'Count': []}, 'Empty Lab': {'Time': [], 'Count': []} }
-        dayStartTime = time(7,30,0)
-        nightStartTime = time(16,30,0)
+        dayStartTime = time(8,0,0)
+        dayEndTime = time(17,0,0)
+        nightStartTime = time(18,0,0)
+        nightEndTime = time(0,0,0)
         emptyStartTime = time(0,0,0)
+        emptyEndTime = time(7,0,0)
         for item in dataArray:
             itemTime = datetime.fromtimestamp( item['time'] ) - timedelta(hours=2)
             if itemTime >= startDate and itemTime <= endDate:
-                if itemTime.time() >= dayStartTime and itemTime.time() < nightStartTime:
+                if itemTime.time() >= dayStartTime and itemTime.time() < dayEndTime:
                     dataDictionary['Day Shift']['Time'].append( itemTime )
                     dataDictionary['Day Shift']['Count'].append( item['count'] )
-                elif itemTime.time() >= nightStartTime or itemTime.time() < emptyStartTime:
+                elif itemTime.time() >= nightStartTime or itemTime.time() < nightEndTime:
                     dataDictionary['Night Shift']['Time'].append( itemTime )
                     dataDictionary['Night Shift']['Count'].append( item['count'] )
-                elif itemTime.time() >= emptyStartTime and itemTime.time() < dayStartTime:
+                elif itemTime.time() >= emptyStartTime and itemTime.time() < emptyEndTime:
                     dataDictionary['Empty Lab']['Time'].append( itemTime )
                     dataDictionary['Empty Lab']['Count'].append( item['count'] )
         for shift in ['Day Shift','Night Shift','Empty Lab']:
@@ -35,34 +38,40 @@ class DataAnalysis():
         nightShiftCounts = dataDictionary['Night Shift']['Count']
         emptyLabDates = dataDictionary['Empty Lab']['Time']
         emptyLabCounts = dataDictionary['Empty Lab']['Count']
-        
+
+        pyplot.figure(num=None, figsize=(16,9), dpi=100, facecolor='w', edgecolor='k')
         pyplot.plot_date(date2num(dayShiftDates),dayShiftCounts, 'r-')
         pyplot.plot_date(date2num(nightShiftDates),nightShiftCounts, 'g-')
         pyplot.plot_date(date2num(emptyLabDates),emptyLabCounts, 'b-')
         pyplot.xlabel( 'Date/Time (MT)' )
         pyplot.ylabel( 'Count' )
         pyplot.title( particleSize + ' um Counts' )
-        pyplot.show()
+        pyplot.savefig( 'Plot' + particleSize + '.png' )
 
     def plotAllData( self, allData, particleSize ):
         dates = allData['Time']
 
-        pyplot.plot_date(date2num(dates),allData['Day Shift Avg'], 'r.')
-        pyplot.plot_date(date2num(dates),allData['Night Shift Avg'], 'g.')
-        pyplot.plot_date(date2num(dates),allData['Empty Lab Avg'], 'b.')
-        pyplot.plot_date(date2num(dates),allData['Day Shift Base'], 'r-')
-        pyplot.plot_date(date2num(dates),allData['Night Shift Base'], 'g-')
-        pyplot.plot_date(date2num(dates),allData['Empty Lab Base'], 'b-')
-        pyplot.xlabel( 'Date (MT)' )
-        pyplot.ylabel( 'Average Count and Baseline' )
-        pyplot.title( 'Averages and Baselines for ' + particleSize + ' um Counts' )
-        pyplot.show()
+        for shift in ['Day Shift','Night Shift','Empty Lab']:
+            pyplot.figure(num=None, figsize=(16,9), dpi=100, facecolor='w', edgecolor='k')
+            pyplot.plot_date(date2num(dates),allData[shift + ' Avg'], 'b-')
+            pyplot.xlabel( 'Date (MT) ')
+            pyplot.ylabel( 'Average Count' )
+            pyplot.title( shift + ' Averages for ' + particleSize + 'um Counts' )
+            pyplot.savefig( 'Avg' + shift[:-6] + particleSize + '.png')
+            
+        for shift in ['Day Shift','Night Shift','Empty Lab']:
+            pyplot.figure(num=None, figsize=(16,9), dpi=100, facecolor='w', edgecolor='k')
+            pyplot.plot_date(date2num(dates),allData[shift + ' Base'], 'b-')
+            pyplot.xlabel( 'Date (MT)' )
+            pyplot.ylabel( 'Baseline' )
+            pyplot.title( shift + '  Baselines for ' + particleSize + ' um Counts' )
+            pyplot.savefig( 'Base' + shift[:-6] + particleSize + '.png')
 
     def dateRange(self,startDate,endDate):
         for n in range(int ((endDate - startDate).days)):
             yield startDate + timedelta(n)
 
-    def getAnalysisByDate( self, dataArray, startDate=datetime(2012,9,1), endDate=datetime.utcnow() ):
+    def getAnalysisByDate( self, dataArray, startDate=datetime(2012,9,18), endDate=datetime.utcnow() ):
         data = {'Day Shift Avg': [], 'Night Shift Avg': [], 'Empty Lab Avg': [], 'Day Shift Base': [], 'Night Shift Base': [], 'Empty Lab Base': [], 'Time': []}
         for dateTime in self.dateRange(startDate,endDate):
             print ''
@@ -94,10 +103,10 @@ class DataAnalysis():
 
     def getBaseline( self, dataDictionary, shift ):
         counts = dataDictionary[shift]['Count'][:]
-        if len(counts) == 0:
-            return 0
         for i in xrange(counts.count(0)):
             counts.remove(0)
+        if len(counts) == 0:
+            return 0
         minimum = min(counts)
         i = 0
         while i < len(counts):

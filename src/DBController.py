@@ -24,14 +24,14 @@ class DBController():
         return dataArray
 
     def saveParticleDataFromDatabase( self, particleSize ):
-        print 'Getting ' + particleSize + ' um data from database'
+        print '\nGetting ' + particleSize + ' um data from database'
         with open('database.json', 'r') as database:
             particleData = []
             n = 1
             for rec in database:
-                if n % 10000 == 0:
-                    print n ,
-                if rec[0] in '[]':
+                if n % 100 == 0:
+                    print 'Number of documents processed: ' + str(n) + '         \r',
+                if rec[0] in '[]' or rec[-2] in '[]':
                     continue
                 try:
                     recDict = json.loads(rec[0:-2])
@@ -45,8 +45,16 @@ class DBController():
                 except KeyError:
                     pass
                 except ValueError:
-                    print rec
+                    recDict = json.loads(rec[0:-1])
+                    if recDict['id'][0] == '_':
+                        continue
+                    stringName = 'DR ' + str(particleSize) + ' um count'
+                    for item in recDict['doc']['adcs']:
+                        if stringName in item.keys():
+                            particleData.append( { 'count': item[stringName],
+                                                   'time': recDict['doc']['time'] } )
                 n += 1
+            print '\nSaving ' + particleSize + ' um data to file'
             self.saveParticleData(particleData, particleSize)
             
     def getParticleCount( self, particleRec, particleSize ):
