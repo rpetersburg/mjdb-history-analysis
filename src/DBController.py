@@ -16,7 +16,7 @@ class DBController():
         try:
             print 'Attempting to Load Particle Data'
             dataArray = self.loadParticleData( particleSize )
-            print 'Load Successful'
+            print 'Load Successful\n'
         except IOError:
             print 'Particle Data does not exist. Gathering and Saving Records'
             self.saveParticleDataFromDatabase( particleSize )
@@ -65,11 +65,21 @@ class DBController():
                     'time': particleRec['doc']['time'] }
 
     def saveParticleData( self, dataArray, particleSize ):
+        print 'Saving particle count data to file'
         with open('particleData' + str(particleSize) + '.json', 'w') as fp:
             json.dump(dataArray, fp)
 
     def loadParticleData( self, particleSize ):
         with open('particleData' + str(particleSize) + '.json', 'r') as fp:
+            return json.load(fp)
+
+    def saveAvgBaseData( self, data, particleSize ):
+        print '\nSaving average and baseline data to file'
+        with open( particleSize + 'AvgBaseData.json', 'w') as fp:
+            json.dump( data, fp )
+
+    def loadAvgBaseData( self, particleSize ):
+        with open( str(particleSize) + 'AvgBaseData.json', 'r') as fp:
             return json.load(fp)
 
     def copyDatabase( self ):

@@ -10,10 +10,16 @@ class MJParticleDataAnalysis:
 
     def run(self, particleSize='2.0', startDate='09-18-2012', endDate=datetime.utcnow().strftime('%m-%d-%Y') ):
         dataArray = self.dbController.getParticleData( particleSize )
-
-        startDate = datetime.strptime(startDate,'%m-%d-%Y')
-        endDate = datetime.strptime(endDate,'%m-%d-%Y')
-        allData = self.dataAnalysis.getAnalysisByDate(dataArray,startDate,endDate)
+        try:
+            print 'Attempting to Load Average and Baseline Data'
+            allData = self.dbController.loadAvgBaseData( particleSize )
+            print 'Load successful\n'
+        except IOError:
+            print 'Average and Baseline Data does not exist. Gathering and Saving Records'
+            startDate = datetime.strptime(startDate,'%m-%d-%Y')
+            endDate = datetime.strptime(endDate,'%m-%d-%Y')
+            allData = self.dataAnalysis.getAnalysisByDate(dataArray,startDate,endDate)
+            self.dbController.saveAvgBaseData( allData, particleSize )
 
         self.dataAnalysis.plotAllData( allData, particleSize )
         

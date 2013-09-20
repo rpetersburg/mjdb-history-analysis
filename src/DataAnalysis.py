@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 from matplotlib import pyplot
-from matplotlib.dates import date2num
+from matplotlib.dates import date2num, num2date
 
 class DataAnalysis():
 
@@ -50,18 +50,18 @@ class DataAnalysis():
 
     def plotAllData( self, allData, particleSize ):
         dates = allData['Time']
-
+        print 'Plotting and saving averages'
         for shift in ['Day Shift','Night Shift','Empty Lab']:
             pyplot.figure(num=None, figsize=(16,9), dpi=100, facecolor='w', edgecolor='k')
-            pyplot.plot_date(date2num(dates),allData[shift + ' Avg'], 'b-')
+            pyplot.plot_date(dates,allData[shift + ' Avg'], 'b-')
             pyplot.xlabel( 'Date (MT) ')
             pyplot.ylabel( 'Average Count' )
             pyplot.title( shift + ' Averages for ' + particleSize + 'um Counts' )
             pyplot.savefig( 'Avg' + shift[:-6] + particleSize + '.png')
-            
+        print 'Plotting and saving baselines'   
         for shift in ['Day Shift','Night Shift','Empty Lab']:
             pyplot.figure(num=None, figsize=(16,9), dpi=100, facecolor='w', edgecolor='k')
-            pyplot.plot_date(date2num(dates),allData[shift + ' Base'], 'b-')
+            pyplot.plot_date(dates,allData[shift + ' Base'], 'b-')
             pyplot.xlabel( 'Date (MT)' )
             pyplot.ylabel( 'Baseline' )
             pyplot.title( shift + '  Baselines for ' + particleSize + ' um Counts' )
@@ -79,7 +79,7 @@ class DataAnalysis():
             try:
                 dataDictionary = self.organizeDataArray( dataArray, dateTime, dateTime + timedelta(1) )
 
-                data['Time'].append(dateTime)
+                data['Time'].append(date2num(dateTime))
                 
                 averages = self.averageAllTimes(dataDictionary)
                 data['Day Shift Avg'].append(averages['Day Shift'])
