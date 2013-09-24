@@ -31,7 +31,7 @@ class DataAnalysis():
             dataDictionary[shift]['Time'], dataDictionary[shift]['Count'] = (list(t) for t in zip(*sorted(zip(dataDictionary[shift]['Time'], dataDictionary[shift]['Count']))))
         return dataDictionary
 
-    def graphDataDictionary( self, dataDictionary, particleSize ):
+    def graphDataDictionary( self, dataDictionary, particleSize, room ):
         dayShiftDates = dataDictionary['Day Shift']['Time']
         dayShiftCounts = dataDictionary['Day Shift']['Count']
         nightShiftDates = dataDictionary['Night Shift']['Time']
@@ -45,10 +45,14 @@ class DataAnalysis():
         pyplot.plot_date(date2num(emptyLabDates),emptyLabCounts, 'b-')
         pyplot.xlabel( 'Date/Time (MT)' )
         pyplot.ylabel( 'Count' )
-        pyplot.title( particleSize + ' um Counts' )
-        pyplot.savefig( 'Plot' + particleSize + '.png' )
+        pyplot.title( room + ' ' + particleSize + ' um Counts' )
+        pyplot.savefig( room + particleSize + 'Plot.png' )
+        
+        pyplot.set_yscale('log')
+        pyplot.title( room + ' ' + particleSize + ' um Counts Log Scale' )
+        pyplot.savefig( room + particleSize + 'PlotLog.png' )
 
-    def plotAllData( self, allData, particleSize ):
+    def plotAllData( self, allData, particleSize, room ):
         dates = allData['Time']
         print 'Plotting and saving averages'
         for shift in ['Day Shift','Night Shift','Empty Lab']:
@@ -56,16 +60,25 @@ class DataAnalysis():
             pyplot.plot_date(dates,allData[shift + ' Avg'], 'b-')
             pyplot.xlabel( 'Date (MT) ')
             pyplot.ylabel( 'Average Count' )
-            pyplot.title( shift + ' Averages for ' + particleSize + 'um Counts' )
-            pyplot.savefig( 'Avg' + shift[:-6] + particleSize + '.png')
+            pyplot.title( room + ' ' + shift + ' Averages for ' + particleSize + ' um Counts' )
+            pyplot.savefig( room + particleSize + 'Avg' + shift[:-6] + '.png')
+
+            pyplot.set_yscale('log')
+            pyplot.title( room + ' ' + shift + ' Averages for ' + particleSize + ' um Counts Log Scale' )
+            pyplot.savefig( room + particleSize + 'Avg' + shift[:-6] + '.png')
+
         print 'Plotting and saving baselines'   
         for shift in ['Day Shift','Night Shift','Empty Lab']:
             pyplot.figure(num=None, figsize=(16,9), dpi=100, facecolor='w', edgecolor='k')
             pyplot.plot_date(dates,allData[shift + ' Base'], 'b-')
             pyplot.xlabel( 'Date (MT)' )
             pyplot.ylabel( 'Baseline' )
-            pyplot.title( shift + '  Baselines for ' + particleSize + ' um Counts' )
-            pyplot.savefig( 'Base' + shift[:-6] + particleSize + '.png')
+            pyplot.title( room + ' ' + shift + ' Baselines for ' + particleSize + ' um Counts' )
+            pyplot.savefig( room + particleSize + 'Base' + shift[:-6] + '.png')
+
+            pyplot.set_yscale('log')
+            pyplot.title( room + ' ' + shift + ' Baselines for ' + particleSize + ' um Counts Log Scale' )
+            pyplot.savefig( room + particleSize + 'Base' + shift[:-6] + '.png')
 
     def dateRange(self,startDate,endDate):
         for n in range(int ((endDate - startDate).days)):
